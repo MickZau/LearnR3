@@ -8,9 +8,21 @@ format: html
 
 ```{r setup}
 #| include: false
+library(tidyverse)
+library(here)
+library(snakecase)
 ```
 
 ```{r}
 # Code chunk
 ```
 
+## Importing CGM
+```{r}
+cgm_101 <- here("data-raw/dime/cgm/101.csv") |>
+  read_csv(
+    show_col_types = FALSE,
+    name_repair = to_snake_case,
+    n_max = 100
+  )
+```
