@@ -11,6 +11,7 @@ format: html
 library(tidyverse)
 library(here)
 library(snakecase)
+source(here("R/functions.R"))
 ```
 
 ```{r}
@@ -80,6 +81,36 @@ import_cgm <- function(file_path) {
 here("data-raw/dime/cgm/101.csv") |>
   import_cgm()
 
-here("data-raw/dime/cgm/102.csv") |> 
+here("data-raw/dime/sleep/102.csv") |>
   import_cgm()
+```
+
+## Exercise to make function to import sleep data
+
+```{r}
+import_sleep <- function(file_path) {
+  sleep <- file_path |>
+    readr::read_csv(
+      show_col_types = FALSE,
+      name_repair = to_snake_case,
+      n_max = 100
+    )
+  return(sleep)
+}
+
+here("data-raw/dime/sleep/102.csv") |>
+  import_sleep()
+
+here("data-raw/dime/cgm/102.csv") |>
+  import_sleep()
+```
+
+## Import DIME data function
+
+```{r}
+here("data-raw/dime/sleep/101.csv") |>
+  import_dime()
+
+here("data-raw/dime/cgm/101.csv") |>
+  import_dime()
 ```
