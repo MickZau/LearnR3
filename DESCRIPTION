@@ -5,3 +5,11 @@ Version: 0.0.1
 Encoding: UTF-8
 URL: https://github.com/MickZau/LearnR3
 BugReports: https://github.com/MickZau/LearnR3/issues
+Imports: 
+    fs,
+    here,
+    readr,
+    roxygen2,
+    snakecase
+Depends: 
+    tidyverse
