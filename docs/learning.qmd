@@ -9,18 +9,34 @@ format: html
 ```{r setup}
 #| include: false
 library(fs)
+library(stringr)
 library(tidyverse)
 library(here)
 library(snakecase)
 source(here("R/functions.R"))
+# CGM files
+cgm_data <- here("data-raw/dime/cgm/") |>
+  import_csv_files() |> 
+  get_participant_id()
+# Sleep data
+sleep_data <- here("data-raw/dime/sleep") |>
+  import_csv_files() |> 
+  get_participant_id()
 ```
+
+```{r}
+cgm_data
+
+sleep_data
+```
+
 
 ```{r}
 # Code chunk
 ```
 
 ## Importing CGM
-```{r}
+```{r}#
 cgm_101 <- here("data-raw/dime/cgm/101.csv") |>
   read_csv(
     show_col_types = FALSE,
@@ -31,7 +47,7 @@ cgm_101
 ```
 
 ## Exercise: Import 101's sleep data
-```{r}
+```{r}#
 sleep_101 <- here("data-raw/dime/sleep/101.csv") |>
   read_csv(
     show_col_types = FALSE,
@@ -43,7 +59,7 @@ sleep_101
 
 ## Making a function that adds numbers
 
-```{r}
+```{r}#
 #' Add two numbers together
 #'
 #' @param num1 A number
@@ -61,7 +77,7 @@ add_numbers(98, 85)
 ```
 
 # Import CGM data with a function
-```{r}
+```{r}#
 #' Import participant CGM
 #'
 #' @param file_path Path to file
@@ -88,7 +104,7 @@ here("data-raw/dime/sleep/102.csv") |>
 
 ## Exercise to make function to import sleep data
 
-```{r}
+```{r}#
 import_sleep <- function(file_path) {
   sleep <- file_path |>
     readr::read_csv(
@@ -108,7 +124,7 @@ here("data-raw/dime/cgm/102.csv") |>
 
 ## Import DIME data function
 
-```{r}
+```{r}#
 here("data-raw/dime/sleep/101.csv") |>
   import_dime()
 
@@ -116,18 +132,19 @@ here("data-raw/dime/cgm/101.csv") |>
   import_dime()
 ```
 
-## Using map
+## Exercise: Convert map to function and use on sleep
 
-```{r}
-cgm_files <- here("data-raw/dime/cgm/") |> 
-  dir_ls(glob="*.csv")
-
-cgm_files
-
-cgm_data <- cgm_files |> 
-  map(import_dime) |> 
-  list_rbind(names_to = "file_path_id")
-
-knitr::kable(cgm_data)
+```{r}#
+here("data-raw/dime/cgm/") |>
+  import_csv_files()
+here("data-raw/dime/sleep/") |>
+  import_csv_files()
 ```
 
+## Testing regex with path ID
+
+```{r}#
+cgm_data <- here("data-raw/dime/cgm") |>
+  import_csv_files() |>
+  get_participant_id()
+```
