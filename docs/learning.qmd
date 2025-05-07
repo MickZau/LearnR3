@@ -19,26 +19,64 @@ library(snakecase)
 source(here("R/functions.R"))
 # CGM files
 cgm_data <- here("data-raw/dime/cgm/") |>
-  import_csv_files() |> 
-  get_participant_id() |> 
-  prepare_dates(device_timestamp)
+  import_csv_files() |>
+  clean_cgm()
 # Sleep data
 sleep_data <- here("data-raw/dime/sleep") |>
-  import_csv_files() |> 
-  get_participant_id() |> 
-  rename(datetime = date) |> 
+  import_csv_files() |>
+  get_participant_id() |>
+  rename(datetime = date) |>
   prepare_dates(datetime)
 ```
 
 ```{r}
 cgm_data
+# sleep_data
+```
 
-sleep_data
+## Summarising with across()
+
+```{r}
+# cgm_data |>
+# summarise(across(Glucose, list(mean, median, sd)))
+
+cgm_data |>
+  summarise(across(Glucose, list(
+    mean = mean,
+    sd = sd,
+    median = median
+  )))
 ```
 
 
+## Summarise by group FOR CGM
+
 ```{r}
-# Code chunk
+cgm_data |>
+  select(-device_timestamp) |>
+  group_by(id, date, hour) |>
+  summarise(
+    across(Glucose, list(
+      mean = mean,
+      sd = sd
+    )),
+    .groups = "drop"
+  )
+```
+
+## Summarise groups universal
+
+```{r}
+cgm_data |>
+  select(-contains("timestamp"), -contains("datetime")) |>
+  group_by(pick(-Glucose)) |>
+  summarise(
+    across(Glucose, list(
+      mean = mean,
+      sd = sd
+    )),
+    .groups = "drop"
+  )
 ```
 
 ## Importing CGM
@@ -182,4 +220,3 @@ prepare_dates(cgm_data, device_timestamp)
 
 prepare_dates(sleep_data, datetime)
 ```
-
