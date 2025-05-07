@@ -2,6 +2,8 @@
 title: "Draft Quarto document"
 author: "Michael Zaucha Sørensen"
 format: html
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ## Header 1
@@ -12,16 +14,20 @@ library(fs)
 library(stringr)
 library(tidyverse)
 library(here)
+library(lubridate)
 library(snakecase)
 source(here("R/functions.R"))
 # CGM files
 cgm_data <- here("data-raw/dime/cgm/") |>
   import_csv_files() |> 
-  get_participant_id()
+  get_participant_id() |> 
+  prepare_dates(device_timestamp)
 # Sleep data
 sleep_data <- here("data-raw/dime/sleep") |>
   import_csv_files() |> 
-  get_participant_id()
+  get_participant_id() |> 
+  rename(datetime = date) |> 
+  prepare_dates(datetime)
 ```
 
 ```{r}
@@ -148,3 +154,32 @@ cgm_data <- here("data-raw/dime/cgm") |>
   import_csv_files() |>
   get_participant_id()
 ```
+
+## Working with dates
+
+```{r}#
+cgm_data |> 
+  mutate(
+    date = as_date(device_timestamp),
+    hour = hour(device_timestamp),
+    .before = device_timestamp
+  ) |> 
+  select(-device_timestamp)
+```
+
+```{r}#
+prepare_dates <- function(data, column) {
+  prepared_dates <- data |> 
+  mutate(
+    date = as_date({{column}}),
+    hour = hour({{column}}),
+    .before = {{column}}
+  )
+  return(prepared_dates)
+}
+
+prepare_dates(cgm_data, device_timestamp)
+
+prepare_dates(sleep_data, datetime)
+```
+
