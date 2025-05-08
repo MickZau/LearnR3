@@ -29,32 +29,30 @@ sleep_data <- here("data-raw/dime/sleep") |>
 participant_details <- here("data-raw/dime/participant_details.csv") |>
   import_dime() |>
   clean_participant_details()
-```
 
-## Pivot wider
+dime_data <- participant_details |> 
+  full_join(cgm_data) |> 
+  full_join(sleep_data)
 
-```{r}
-#' Convert sleep data to pivot wider
-#'
-#' @param data Sleep data
-#'
-#' @returns A cleaner data frame
-sleep_types_to_wider <- function(data) {
-  wider <- data |>
-    tidyr::pivot_wider(
-      names_from = sleep_type,
-      values_from = seconds_sum,
-      names_prefix = "seconds_"
-    )
-  return(wider)
-}
+write.csv(dime_data, here("data/dime.csv"))
 ```
 
 ## Sleep data test
 
 ```{r}
-sleep_data
+participant_details |> 
+  left_join(cgm_data)
 ```
+
+```{r}
+participant_details |> 
+  right_join(cgm_data)
+```
+
+```{r}
+
+```
+
 
 ## Summarising with across()
 

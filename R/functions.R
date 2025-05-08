@@ -8,8 +8,7 @@ import_dime <- function(file_path) {
   data <- file_path |>
     readr::read_csv(
       show_col_types = FALSE,
-      name_repair = snakecase::to_snake_case,
-      n_max = 100
+      name_repair = snakecase::to_snake_case
     )
   return(data)
 }
