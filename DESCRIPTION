@@ -6,6 +6,7 @@ Encoding: UTF-8
 URL: https://github.com/MickZau/LearnR3
 BugReports: https://github.com/MickZau/LearnR3/issues
 Imports: 
+    arrow,
     dplyr,
     fs,
     here,

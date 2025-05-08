@@ -3,3 +3,20 @@ title: "MZS"
 format: html
 ---
 
+```{r}
+#Setup
+#| include: false
+library(fs)
+library(arrow)
+library(stringr)
+library(tidyverse)
+library(here)
+library(lubridate)
+library(snakecase)
+source(here("R/functions-mzs.R"))
+source(here("R/functions-AnneKristine.R"))
+
+raw_data <- here("data-raw/nurses-stress/") |> 
+  import_csv_files()
+```
+
