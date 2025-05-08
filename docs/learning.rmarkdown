@@ -6,7 +6,11 @@ editor_options:
   chunk_output_type: inline
 ---
 
+
+
 ## Header 1
+
+
 
 ```{r setup}
 #| include: false
@@ -31,7 +35,11 @@ participant_details <- here("data-raw/dime/participant_details.csv") |>
   clean_participant_details()
 ```
 
+
+
 ## Pivot wider
+
+
 
 ```{r}
 #' Convert sleep data to pivot wider
@@ -50,11 +58,17 @@ sleep_types_to_wider <- function(data) {
 }
 ```
 
+
+
 ## Sleep data test
+
+
 
 ```{r}
 sleep_data
 ```
+
+
 
 ## Summarising with across()
 
@@ -243,3 +257,4 @@ prepare_dates(cgm_data, device_timestamp)
 
 prepare_dates(sleep_data, datetime)
 ```
+

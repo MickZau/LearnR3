@@ -88,7 +88,8 @@ clean_sleep <- function(data) {
     get_participant_id() |>
     dplyr::rename(datetime = date) |>
     prepare_dates(datetime) |>
-    summarise_column(seconds, list(sum = sum))
+    summarise_column(seconds, list(sum = sum)) |>
+    sleep_types_to_wider()
   return(cleaned)
 }
 
@@ -126,4 +127,19 @@ clean_participant_details <- function(data) {
       date = seq(min(date), max(date), by = "1 day")
     )
   return(cleaned)
+}
+
+#' Convert sleep data to pivot wider
+#'
+#' @param data Sleep data
+#'
+#' @returns A cleaner data frame
+sleep_types_to_wider <- function(data) {
+  wider <- data |>
+    tidyr::pivot_wider(
+      names_from = sleep_type,
+      values_from = seconds_sum,
+      names_prefix = "seconds_"
+    )
+  return(wider)
 }
