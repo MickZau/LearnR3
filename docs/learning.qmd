@@ -23,15 +23,18 @@ cgm_data <- here("data-raw/dime/cgm/") |>
   clean_cgm()
 # Sleep data
 sleep_data <- here("data-raw/dime/sleep") |>
-  import_csv_files() |>
-  get_participant_id() |>
-  rename(datetime = date) |>
-  prepare_dates(datetime)
+  import_csv_files() |> 
+  clean_sleep()
+
+participant_details <- here("data-raw/dime/participant_details.csv") |>
+  import_dime() |> 
+  clean_participant_details()
 ```
 
+###Pivot wider
+
 ```{r}
-cgm_data
-# sleep_data
+sleep_data
 ```
 
 ## Summarising with across()
@@ -78,6 +81,7 @@ cgm_data |>
     .groups = "drop"
   )
 ```
+
 
 ## Importing CGM
 ```{r}#

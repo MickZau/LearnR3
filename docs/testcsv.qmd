@@ -1,0 +1,99 @@
+---
+title: "testcsv"
+format: html
+---
+
+---
+title: "Draft Quarto document"
+author: "Michael Zaucha Sørensen"
+format: html
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Header 1
+
+```{r setup}
+#| include: false
+library(fs)
+library(stringr)
+library(tidyverse)
+library(here)
+library(lubridate)
+library(snakecase)
+source(here("R/functions.R"))
+# CGM files
+cgm_data <- here("L:/LovbeskyttetMapper/AID projekt - Collab grant/WP2+3 (AIDBeyond)/AID-BEYOND TMF/12) Uploads and raw data/Voksen/Project Dexcom G7/Control/Follow-up/CSV/") |>
+  fs::dir_ls(glob = "*.csv") |>
+  map(readr::read_csv,
+      show_col_types = FALSE) |> 
+ # map(mutate,
+     # Glucose = as.integer("Glucose Value (mmol/L)",
+                          # )) |> 
+  map(rename,
+      Glucose = "Glucose Value (mmol/L)",
+      Datetime = "Timestamp (YYYY-MM-DDThh:mm:ss)",
+      Event_type = "Event Type") |> 
+  map(select,
+      Event_type,
+      Datetime,
+      Glucose) |> 
+  map(filter,
+      Event_type == "EGV",
+      )
+```
+
+```{r}
+cgm_data
+```
+
+```{r}
+cgm_data
+# sleep_data
+```
+
+## Summarising with across()
+
+```{r}
+# cgm_data |>
+# summarise(across(Glucose, list(mean, median, sd)))
+
+cgm_data |>
+  summarise(across(Glucose, list(
+    mean = mean,
+    sd = sd,
+    median = median
+  )))
+```
+
+
+## Summarise by group FOR CGM
+
+```{r}
+cgm_data |>
+  select(-device_timestamp) |>
+  group_by(id, date, hour) |>
+  summarise(
+    across(Glucose, list(
+      mean = mean,
+      sd = sd
+    )),
+    .groups = "drop"
+  )
+```
+
+## Summarise groups universal
+
+```{r}
+cgm_data |>
+  select(-contains("timestamp"), -contains("datetime")) |>
+  group_by(pick(-Glucose)) |>
+  summarise(
+    across(Glucose, list(
+      mean = mean,
+      sd = sd
+    )),
+    .groups = "drop"
+  )
+```
+

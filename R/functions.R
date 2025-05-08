@@ -70,6 +70,60 @@ clean_cgm <- function(data) {
   cleaned <- data |>
     get_participant_id() |>
     prepare_dates(device_timestamp) |>
-    dplyr::rename(Glucose = historic_glucose_mmol_l)
+    dplyr::rename(Glucose = historic_glucose_mmol_l) |>
+    summarise_column(Glucose, list(
+      mean = mean,
+      sd = sd
+    ))
+  return(cleaned)
+}
+
+#' Clean and prepare sleep data for joining
+#'
+#' @param data The sleep dataset
+#'
+#' @returns A cleaner data frame
+clean_sleep <- function(data) {
+  cleaned <- data |>
+    get_participant_id() |>
+    dplyr::rename(datetime = date) |>
+    prepare_dates(datetime) |>
+    summarise_column(seconds, list(sum = sum))
+  return(cleaned)
+}
+
+#' Summarise a single column based on one or more functions
+#'
+#' @param data Either the CGM or sleep data in DIME
+#' @param column The column we want to summarise
+#' @param functions One or more functions to apply to the column. IF more than one added, use list().
+#'
+#' @returns A summarised column
+summarise_column <- function(data, column, functions) {
+  summarized_data <- data |>
+    dplyr::select(-tidyselect::contains("timestamp"), -tidyselect::contains("datetime")) |>
+    dplyr::group_by(dplyr::pick(-{{ column }})) |>
+    dplyr::summarise(
+      dplyr::across(
+        {{ column }},
+        functions
+      ),
+      .groups = "drop"
+    )
+  return(summarized_data)
+}
+
+#' Convert the participant details data to long and clean it up.
+#'
+#' @param data The DIME participant details data
+#'
+#' @returns A data frame
+clean_participant_details <- function(data) {
+  cleaned <- data |>
+    tidyr::pivot_longer(tidyselect::ends_with("date"), names_to = NULL, values_to = "date") |>
+    dplyr::group_by(dplyr::pick(-date)) |>
+    tidyr::complete(
+      date = seq(min(date), max(date), by = "1 day")
+    )
   return(cleaned)
 }
