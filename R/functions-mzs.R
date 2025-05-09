@@ -1,144 +1,81 @@
-#' Import data from the DIME study dataset.
+#' Import HR parquet files
 #'
-#' @param file_path Path to the CSV file.
+#' @param file_path HR files
 #'
 #' @returns A data frame
-#'
-import_dime <- function(file_path) {
-  data <- file_path |>
-    readr::read_csv(
-      show_col_types = FALSE,
-      name_repair = snakecase::to_snake_case
-    )
-  return(data)
+import_hr_files <- function(file_path) {
+  files <- file_path |>
+  fs::dir_ls(regexp = "HR\\.parquet", recursive = TRUE) |>
+  map(read_parquet) |>
+    list_rbind(names_to = "path_id")
+return(files)
 }
 
-# " Import all DIME csv
-# "
-#' @param folder_path Path to file
+#' Import TEMP parquet files
 #'
-#' @returns Returns a data frame
+#' @param file_path TEMP files
 #'
-import_csv_files <- function(folder_path) {
-  files <- folder_path |>
-    fs::dir_ls(glob = "*.csv")
-
-  data <- files |>
-    purrr::map(import_dime) |>
-    purrr::list_rbind(names_to = "file_path_id")
-  return(data)
+#' @returns A data frame
+import_temp_files <- function(file_path) {
+  files <- file_path |>
+    fs::dir_ls(regexp = "TEMP\\.parquet", recursive = TRUE) |>
+    map(read_parquet) |>
+    list_rbind(names_to = "path_id")
+  return(files)
 }
 
-#' Extract participant id from CSV
+#' Import BVP parquet files
 #'
-#' @param data The path to the files
+#' @param file_path BVP files
 #'
-#' @returns Returns a data fram
-#'
-get_participant_id <- function(data) {
-  data_with_id <- data |>
-    dplyr::mutate(
-      id = stringr::str_extract(
-        file_path_id,
-        "[:digit:]+\\.csv$"
-      ) |>
-        stringr::str_remove("\\.csv$") |>
-        as.integer(),
-      .before = file_path_id
-    ) |>
-    dplyr::select(-file_path_id)
-  return(data_with_id)
+#' @returns A data frame
+import_bvp_files <- function(file_path) {
+  files <- file_path |>
+    fs::dir_ls(regexp = "BVP\\.parquet", recursive = TRUE) |>
+    map(read_parquet) |>
+    list_rbind(names_to = "path_id")
+  return(files)
 }
 
-prepare_dates <- function(data, column) {
-  prepared_dates <- data |>
+#' Generate ID from parquet path ID
+#'
+#' @param data Parquet data
+#'
+#' @returns A data frame
+generate_id <- function(data) {
+new_id <- data |>
+  mutate(
+    ID = stringr::str_extract(
+      path_id,
+      "stress/stress/[:alnum:]+\\/") |>
+      str_remove("stress/stress/") |>
+      str_remove("/"),
+    .before = path_id)
+return(new_id)
+}
+
+#' Splits datetime into date, hour and minutes
+#'
+#' @param data Parguet files
+#' @param column Datetime columns
+#'
+#' @returns Date, hour and minutes
+split_datetime <- function(data, column) {
+  split_dates <- data |>
     mutate(
       date = as_date({{ column }}),
       hour = hour({{ column }}),
-      .before = {{ column }}
-    )
-  return(prepared_dates)
+      .before = {{ column }})
+  return(split_dates)
 }
 
-#' Clean and prepare the CGM data for joining
+#' Select only columns we need
 #'
-#' @param data the CGM dataset
+#' @param column All columns
 #'
-#' @returns A cleaner data frame
-clean_cgm <- function(data) {
-  cleaned <- data |>
-    get_participant_id() |>
-    prepare_dates(device_timestamp) |>
-    dplyr::rename(Glucose = historic_glucose_mmol_l) |>
-    summarise_column(Glucose, list(
-      mean = mean,
-      sd = sd
-    ))
-  return(cleaned)
-}
-
-#' Clean and prepare sleep data for joining
-#'
-#' @param data The sleep dataset
-#'
-#' @returns A cleaner data frame
-clean_sleep <- function(data) {
-  cleaned <- data |>
-    get_participant_id() |>
-    dplyr::rename(datetime = date) |>
-    prepare_dates(datetime) |>
-    summarise_column(seconds, list(sum = sum)) |>
-    sleep_types_to_wider()
-  return(cleaned)
-}
-
-#' Summarise a single column based on one or more functions
-#'
-#' @param data Either the CGM or sleep data in DIME
-#' @param column The column we want to summarise
-#' @param functions One or more functions to apply to the column. IF more than one added, use list().
-#'
-#' @returns A summarised column
-summarise_column <- function(data, column, functions) {
-  summarized_data <- data |>
-    dplyr::select(-tidyselect::contains("timestamp"), -tidyselect::contains("datetime")) |>
-    dplyr::group_by(dplyr::pick(-{{ column }})) |>
-    dplyr::summarise(
-      dplyr::across(
-        {{ column }},
-        functions
-      ),
-      .groups = "drop"
-    )
-  return(summarized_data)
-}
-
-#' Convert the participant details data to long and clean it up.
-#'
-#' @param data The DIME participant details data
-#'
-#' @returns A data frame
-clean_participant_details <- function(data) {
-  cleaned <- data |>
-    tidyr::pivot_longer(tidyselect::ends_with("date"), names_to = NULL, values_to = "date") |>
-    dplyr::group_by(dplyr::pick(-date)) |>
-    tidyr::complete(
-      date = seq(min(date), max(date), by = "1 day")
-    )
-  return(cleaned)
-}
-
-#' Convert sleep data to pivot wider
-#'
-#' @param data Sleep data
-#'
-#' @returns A cleaner data frame
-sleep_types_to_wider <- function(data) {
-  wider <- data |>
-    tidyr::pivot_wider(
-      names_from = sleep_type,
-      values_from = seconds_sum,
-      names_prefix = "seconds_"
-    )
-  return(wider)
+#' @returns All columns except path and datetime
+select_columns <- function(column) {
+  raw_data <- column |>
+    select(-tidyselect::contains("path"), -tidyselect::contains("collection_datetime"))
+  return(raw_data)
 }

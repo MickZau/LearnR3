@@ -4,10 +4,11 @@ format: html
 ---
 
 ```{r}
-#Setup
+# Setup
 #| include: false
 library(fs)
 library(arrow)
+library(dplyr)
 library(stringr)
 library(tidyverse)
 library(here)
@@ -16,7 +17,31 @@ library(snakecase)
 source(here("R/functions-mzs.R"))
 source(here("R/functions-AnneKristine.R"))
 
-raw_data <- here("data-raw/nurses-stress/") |> 
-  import_csv_files()
+raw_hr_data <- here("data-raw/nurses-stress/") |>
+  import_hr_files() |> 
+  generate_id() |> 
+  split_datetime(collection_datetime)
+
+raw_temp_data <- here("data-raw/nurses-stress/") |>
+  import_temp_files() |> 
+  generate_id() |> 
+  split_datetime(collection_datetime)
+
+raw_bvp_data <- here("data-raw/nurses-stress/") |>
+  import_bvp_files() |> 
+  generate_id() |> 
+  split_datetime(collection_datetime)
+
+merged_data <- raw_hr_data |> 
+  right_join(raw_temp_data) |> 
+  left_join(raw_bvp_data) |> 
+  select_columns()
+
+survey_data <- read.csv(here("data-raw/nurses-stress/survey-results.csv"))
 ```
+```{r}
+write.csv(merged_data, here("data/merged.csv"))
+```
+
+
 
